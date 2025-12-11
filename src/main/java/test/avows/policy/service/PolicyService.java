@@ -1,25 +1,33 @@
 package test.avows.policy.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import test.avows.policy.dto.PolicyDto;
+import test.avows.policy.client.CustomerClient;
+import test.avows.policy.dto.PolicyResponseDto;
+import test.avows.policy.dto.PolicyRequestDto;
 import test.avows.policy.entity.Policy;
 import test.avows.policy.exception.ApiException;
 import test.avows.policy.repository.PolicyRepository;
+import test.avows.policy.util.PolicyUtil;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.List;
 
+import static test.avows.policy.util.ConstantUtil.POLICY_STATUS_PENDING_UNDERWRITING;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PolicyService {
 
     private final PolicyRepository policyRepository;
+    private final CustomerClient customerClient;
 
-    public PolicyDto getPolicy(Long policyId) {
+    public PolicyResponseDto getPolicy(Long policyId) {
         return policyRepository.findById(policyId)
-                .map(policy -> PolicyDto.builder()
+                .map(policy -> PolicyResponseDto.builder()
                         .policyId(policy.getPolicyId())
                         .customerId(policy.getCustomerId())
                         .policyNumber(policy.getPolicyNumber())
@@ -33,9 +41,9 @@ public class PolicyService {
 
     }
 
-    public List<PolicyDto> getPoliciesByCustomerId(Long customerId) {
+    public List<PolicyResponseDto> getPoliciesByCustomerId(Long customerId) {
         return policyRepository.findByCustomerId(customerId).stream()
-                .map(policy -> PolicyDto.builder()
+                .map(policy -> PolicyResponseDto.builder()
                         .policyId(policy.getPolicyId())
                         .customerId(policy.getCustomerId())
                         .policyNumber(policy.getPolicyNumber())
@@ -48,21 +56,23 @@ public class PolicyService {
                 ).toList();
     }
 
-    public void createPolicy(PolicyDto param) {
+    public void createPolicy(PolicyRequestDto param) {
         policyRepository.save(
                 Policy.builder()
                         .customerId(param.getCustomerId())
-                        .policyNumber(param.getPolicyNumber())
-                        .type(param.getType())
+                        .policyNumber(PolicyUtil.generatePolicyNumber())
+                        .type(param.getPolicyType())
                         .premiumAmount(param.getPremiumAmount())
-                        .status(param.getStatus())
-                        .startDate(param.getStartDate())
-                        .endDate(param.getEndDate())
+                        .coverageAmount(param.getCoverageAmount())
+                        .status(POLICY_STATUS_PENDING_UNDERWRITING)
                         .build()
         );
+
+        //@todo: trigger kafka event for underwriting process
+
     }
 
-    public void updatePolicy(Long policyId, PolicyDto param) {
+    public void updatePolicy(Long policyId, PolicyResponseDto param) {
         Policy policy = policyRepository.findById(policyId)
                 .orElseThrow(() -> new ApiException(400, "not found", "no data found for policy id " + policyId));
 

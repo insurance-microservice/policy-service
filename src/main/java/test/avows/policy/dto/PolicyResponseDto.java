@@ -12,12 +12,13 @@ import java.sql.Timestamp;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PolicyDto {
+public class PolicyResponseDto {
     private Long policyId;
     private Long customerId;
     private String policyNumber;
     private String type;
     private BigDecimal premiumAmount;
+    private BigDecimal coverageAmount;
     private String status;
     private Timestamp startDate;
     private Timestamp endDate;
