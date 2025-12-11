@@ -40,16 +40,4 @@ public class PolicyController {
                 )
         );
     }
-
-    @PutMapping("/{PolicyId}")
-    public ResponseEntity<ApiResponse> updatePolicy(@PathVariable Long policyId, @RequestBody PolicyResponseDto param) {
-        policyService.updatePolicy(policyId, param);
-        return ResponseEntity.ok().body(
-                new ApiResponse(
-                        true,
-                        "successfully update policy",
-                        null
-                )
-        );
-    }
 }
