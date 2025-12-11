@@ -1,16 +1,14 @@
 spring:
   application:
     name: policy
-  profiles:
-    active: prod
-  server:
-    port: 8082
-
   datasource:
     driverClassName: org.postgresql.Driver
-    url: jdbc:postgresql://postgres:5432/insurance_db
+    url: jdbc:postgresql://localhost:5432/insurance_db
     username: db_user
     password: secret4321!!
 
 services:
-  customer-url: http://customer-service:8081
+  customer-url: http://localhost:8081
+
+server:
+  port: 8082
