@@ -33,6 +33,9 @@ public class Policy {
     @Column(name = "premium_amount")
     private BigDecimal premiumAmount;
 
+    @Column(name = "coverage_amount")
+    private BigDecimal coverageAmount;
+
     @Column(name = "status")
     private String status;
 
