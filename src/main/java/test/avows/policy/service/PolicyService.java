@@ -8,13 +8,17 @@ import test.avows.policy.dto.PolicyResponseDto;
 import test.avows.policy.dto.PolicyRequestDto;
 import test.avows.policy.entity.Policy;
 import test.avows.policy.exception.ApiException;
+import test.avows.policy.messaging.producer.UnderwritingProducer;
 import test.avows.policy.repository.PolicyRepository;
 import test.avows.policy.util.PolicyUtil;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 
-import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.List;
 
+import static test.avows.policy.util.ConstantUtil.POLICY_STATUS_APPROVED;
 import static test.avows.policy.util.ConstantUtil.POLICY_STATUS_PENDING_UNDERWRITING;
 
 @Slf4j
@@ -24,6 +28,9 @@ public class PolicyService {
 
     private final PolicyRepository policyRepository;
     private final CustomerClient customerClient;
+    private final UnderwritingProducer underwritingProducer;
+    private final ObjectMapper objectMapper;
+
 
     public PolicyResponseDto getPolicy(Long policyId) {
         return policyRepository.findById(policyId)
@@ -57,6 +64,13 @@ public class PolicyService {
     }
 
     public void createPolicy(PolicyRequestDto param) {
+
+        Long customerId = param.getCustomerId();
+        JsonNode customerData = customerClient.getCustomerById(customerId).asOptional()
+                .orElseThrow(() -> new ApiException(400, "not found", "no data found for customer id " + customerId));
+
+        log.info("fetch data from customer service: {}", customerData);
+
         policyRepository.save(
                 Policy.builder()
                         .customerId(param.getCustomerId())
@@ -68,28 +82,34 @@ public class PolicyService {
                         .build()
         );
 
-        //@todo: trigger kafka event for underwriting process
+        ObjectNode message = objectMapper.createObjectNode();
+        message.put("customerId", customerId);
+        message.put("age", customerData.get("age").asInt());
+        message.put("policyType", param.getPolicyType());
+        message.put("coverageAmount", param.getCoverageAmount().toString());
+        message.put("premiumAmount", param.getPremiumAmount().toString());
 
+        log.info("sending underwriting request message: {}", message);
+
+        underwritingProducer.sendMessage("underwriting-requests",message.toString());
     }
 
-    public void updatePolicy(Long policyId, PolicyResponseDto param) {
+    public void updatePolicy(Long policyId, String status) {
         Policy policy = policyRepository.findById(policyId)
                 .orElseThrow(() -> new ApiException(400, "not found", "no data found for policy id " + policyId));
 
-        String policyNumber = param.getPolicyNumber();
-        String type = param.getType();
-        BigDecimal premiumAmount = param.getPremiumAmount();
-        String status = param.getStatus();
-        Timestamp startDate = param.getStartDate();
-        Timestamp endDate = param.getEndDate();
+        Timestamp startDate = new Timestamp(System.currentTimeMillis());
+        Timestamp endDate = Timestamp.valueOf(startDate.toLocalDateTime().plusYears(1));
 
-        if (policyNumber != null) policy.setPolicyNumber(policyNumber);
-        if (type != null) policy.setType(type);
-        if (premiumAmount != null) policy.setPremiumAmount(premiumAmount);
-        if (status != null) policy.setStatus(status);
-        if (startDate != null) policy.setStartDate(startDate);
-        if (endDate != null) policy.setEndDate(endDate);
+        if (status.equals(POLICY_STATUS_APPROVED)) {
+            policy.setStartDate(startDate);
+            policy.setEndDate(endDate);
+        } else {
+            policy.setStartDate(null);
+            policy.setEndDate(null);
+        }
 
+        policy.setStatus(status);
         policyRepository.save(policy);
     }
 }
