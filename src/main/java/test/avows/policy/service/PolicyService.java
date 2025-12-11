@@ -71,27 +71,26 @@ public class PolicyService {
 
         log.info("fetch data from customer service: {}", customerData);
 
-        policyRepository.save(
-                Policy.builder()
-                        .customerId(param.getCustomerId())
-                        .policyNumber(PolicyUtil.generatePolicyNumber())
-                        .type(param.getPolicyType())
-                        .premiumAmount(param.getPremiumAmount())
-                        .coverageAmount(param.getCoverageAmount())
-                        .status(POLICY_STATUS_PENDING_UNDERWRITING)
-                        .build()
+        Policy policy = policyRepository.save(Policy.builder()
+                .customerId(param.getCustomerId())
+                .policyNumber(PolicyUtil.generatePolicyNumber())
+                .type(param.getPolicyType())
+                .premiumAmount(param.getPremiumAmount())
+                .coverageAmount(param.getCoverageAmount())
+                .status(POLICY_STATUS_PENDING_UNDERWRITING)
+                .build()
         );
 
         ObjectNode message = objectMapper.createObjectNode();
-        message.put("customerId", customerId);
-        message.put("age", customerData.get("age").asInt());
+        message.put("policyId", policy.getPolicyId());
         message.put("policyType", param.getPolicyType());
         message.put("coverageAmount", param.getCoverageAmount().toString());
         message.put("premiumAmount", param.getPremiumAmount().toString());
+        message.put("age", customerData.get("age").asInt());
 
         log.info("sending underwriting request message: {}", message);
 
-        underwritingProducer.sendMessage("underwriting-requests",message.toString());
+        underwritingProducer.sendMessage("underwriting-requests", message.toString());
     }
 
     public void updatePolicy(Long policyId, String status) {
