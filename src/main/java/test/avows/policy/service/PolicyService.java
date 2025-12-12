@@ -18,8 +18,7 @@ import tools.jackson.databind.node.ObjectNode;
 import java.sql.Timestamp;
 import java.util.List;
 
-import static test.avows.policy.util.ConstantUtil.POLICY_STATUS_APPROVED;
-import static test.avows.policy.util.ConstantUtil.POLICY_STATUS_PENDING_UNDERWRITING;
+import static test.avows.policy.util.ConstantUtil.*;
 
 @Slf4j
 @Service
@@ -100,10 +99,14 @@ public class PolicyService {
         Timestamp startDate = new Timestamp(System.currentTimeMillis());
         Timestamp endDate = Timestamp.valueOf(startDate.toLocalDateTime().plusYears(1));
 
-        if (status.equals(POLICY_STATUS_APPROVED)) {
+        if(status.equals(PAYMENT_STATUS_PAID)) {
+            policy.setStatus(POLICY_STATUS_ACTIVE);
+        }
+        else if (status.equals(POLICY_STATUS_APPROVED)) {
             policy.setStartDate(startDate);
             policy.setEndDate(endDate);
-        } else {
+        }
+        else {
             policy.setStartDate(null);
             policy.setEndDate(null);
         }

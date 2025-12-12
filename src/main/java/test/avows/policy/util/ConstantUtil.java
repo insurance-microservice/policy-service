@@ -7,6 +7,8 @@ public class ConstantUtil {
     public static final String POLICY_STATUS_EXPIRED = "EXPIRED";
     public static final String POLICY_STATUS_PENDING_UNDERWRITING = "PENDING_UNDERWRITING";
 
+    public static final String PAYMENT_STATUS_PAID = "PAID";
+
     public static final String POLICY_TYPE_LIFE = "LIFE";
     public static final String POLICY_TYPE_HEALTH = "HEALTH";
 }
