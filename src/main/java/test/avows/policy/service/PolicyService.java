@@ -103,6 +103,7 @@ public class PolicyService {
             policy.setStatus(POLICY_STATUS_ACTIVE);
         }
         else if (status.equals(POLICY_STATUS_APPROVED)) {
+            policy.setStatus(POLICY_STATUS_APPROVED);
             policy.setStartDate(startDate);
             policy.setEndDate(endDate);
         }
@@ -111,7 +112,6 @@ public class PolicyService {
             policy.setEndDate(null);
         }
 
-        policy.setStatus(status);
         policyRepository.save(policy);
     }
 }
