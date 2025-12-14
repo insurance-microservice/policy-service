@@ -96,20 +96,20 @@ public class PolicyService {
         Policy policy = policyRepository.findById(policyId)
                 .orElseThrow(() -> new ApiException(400, "not found", "no data found for policy id " + policyId));
 
-        Timestamp startDate = new Timestamp(System.currentTimeMillis());
-        Timestamp endDate = Timestamp.valueOf(startDate.toLocalDateTime().plusYears(1));
-
-        if(status.equals(PAYMENT_STATUS_PAID)) {
-            policy.setStatus(POLICY_STATUS_ACTIVE);
-        }
-        else if (status.equals(POLICY_STATUS_APPROVED)) {
-            policy.setStatus(POLICY_STATUS_APPROVED);
-            policy.setStartDate(startDate);
-            policy.setEndDate(endDate);
-        }
-        else {
-            policy.setStartDate(null);
-            policy.setEndDate(null);
+        switch (status) {
+            case PAYMENT_STATUS_PAID -> policy.setStatus(POLICY_STATUS_ACTIVE);
+            case POLICY_STATUS_APPROVED -> {
+                Timestamp startDate = new Timestamp(System.currentTimeMillis());
+                Timestamp endDate = Timestamp.valueOf(startDate.toLocalDateTime().plusYears(1));
+                policy.setStatus(POLICY_STATUS_APPROVED);
+                policy.setStartDate(startDate);
+                policy.setEndDate(endDate);
+            }
+            case POLICY_STATUS_REJECTED -> {
+                policy.setStatus(POLICY_STATUS_REJECTED);
+                policy.setStartDate(null);
+                policy.setEndDate(null);
+            }
         }
 
         policyRepository.save(policy);
